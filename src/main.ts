@@ -1,4 +1,4 @@
-import express, { response } from 'express';
+import express from 'express';
 
 const app = express();
 const port: number = 3000;
@@ -14,21 +14,43 @@ interface itemPriceInfo {
 	lowTime?: number; // Optional
 }
 
-// Find Item ID from Item Name
-// app.get('/item-name/:name', async (req, res) => {
-// 	const name = String(req.query.name) || 'Acorn';
-
-// 	const information = await fetch('https://oldschool.runescape.wiki/?title=Module:GEIDs/data.json&action=raw&ctype=application%2Fjson');
+// Resuable async functions to fetch item ids and prices
+async function getItemId(rawName: string): Promise<number> {
+	const name: string = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
+	const response = await fetch('https://oldschool.runescape.wiki/?title=Module:GEIDs/data.json&action=raw&ctype=application%2Fjson');
 	
-// 	if (!information.ok) {
-// 		throw new Error(`failed to fetch ${name}`);
-// 	}
+	if (!response.ok){
+		throw new Error(`failed to fetch ${name}`);
+	}
+	const data = await response.json()
 
-// 	const data = await information.json();
-// 	res.json(data[name]);
-// })
+	return data[name]
+}
 
-app.get('/item-name/search', async (req, res) => {
+async function getItemPrice(id: number): Promise<itemPriceInfo> {
+	const response = await fetch(`https://prices.runescape.wiki/api/v1/osrs/latest?id=${id}`);
+
+	if (!response.ok) {
+		throw new Error(`Failed to fetch price for item ${id}`);
+	}
+	
+	const data = await response.json();
+	return data.data[id]
+}
+getItemId('abyssal whip').then(name => {
+	console.log(`${name}`)
+})
+// Test function
+getItemPrice(4151).then(price => {
+	console.log(`${price.high.toLocaleString()}`)
+})
+/* 
+LOGIC
+User search(query 10) => User selects name => name looks up id => id gives price info and returns it to user.
+*/
+
+// Find Item ID from Item Name - Query 10 
+app.get('/items/search', async (req, res) => {
 	const name = String(req.query.q).toLowerCase();
   
 	const information = await fetch('https://oldschool.runescape.wiki/?title=Module:GEIDs/data.json&action=raw&ctype=application%2Fjson');
@@ -39,29 +61,33 @@ app.get('/item-name/search', async (req, res) => {
   
 	const data = await information.json();
 	const filteredStr = Object.entries(data)
-						.filter(([key]) => key.includes(name))
+						.filter(([key]) => key.toLowerCase().includes(name))
 						.slice(0, 10)
+						.map(([name, id]) => ({ name, id }))
 
 
 	res.json(filteredStr)
   });
 
-// Current Price data for Item ID
-app.get(`/item-id/:id`, async (req, res) => {
+// Get item info from item name
+app.get('/items/:name', async (req, res) => {
+	const name = String(req.params.name).toLowerCase();
+	const response = await getItemId(name);
 
-	const itemId = Number(req.params.id) || 4151;
-	const response = await fetch(`https://prices.runescape.wiki/api/v1/osrs/latest?id=${itemId}`);
-
-	if (!response.ok) {
-		throw new Error(`Failed to fetch price for item ${itemId}`);
-	}
-	
-	const data = await response.json();
-	res.json(data.data[itemId])
-
+	res.json({ name, id: response })
 })
 
+// Current Price data for Item ID
+app.get(`/items/:name/price`, async (req, res) => {
+	const rawName = String(req.params.name);
+	const name: string = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
 
+	const itemId = await getItemId(name);
+	const itemStockValue = await getItemPrice(itemId);
+	const {high, low} = itemStockValue
+
+	res.json({ name, high, low })
+})
 
 app.listen(port, () => {
 	console.log(`App listening on port ${port}`);
