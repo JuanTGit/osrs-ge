@@ -114,6 +114,18 @@ app.get(`/items/:name/price`, async (req, res) => {
 	res.json({ name, high, low });
 });
 
+app.get("/items/:name/history", async (req, res) => {
+	const rawName = String(req.params.name).toLowerCase();
+	const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+	const itemPirceHistory = await prisma.priceHistory.findMany({
+		where: { itemName: name },
+		orderBy: { createdAt: "desc" },
+	});
+
+	res.json(itemPirceHistory);
+});
+
 app.listen(port, () => {
 	console.log(`App listening on port ${port}`);
 });
