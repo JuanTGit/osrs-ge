@@ -1,4 +1,8 @@
+// import * as dotenv from "dotenv";
+// dotenv.config();
+
 import express from "express";
+import prisma from "../prisma";
 
 const app = express();
 const port: number = 3000;
@@ -42,13 +46,18 @@ async function getItemPrice(id: number): Promise<itemPriceInfo> {
 	const data = await response.json();
 	return data.data[id];
 }
-getItemId("abyssal whip").then((name) => {
-	console.log(`${name}`);
-});
-// Test function
-getItemPrice(4151).then((price) => {
-	console.log(`${price.high.toLocaleString()}`);
-});
+
+/* 
+Test functions
+*/
+
+// getItemId("abyssal whip").then((name) => {
+// 	console.log(`${name}`);
+// });
+// getItemPrice(4151).then((price) => {
+// 	console.log(`${price.high.toLocaleString()}`);
+// });
+
 /* 
 LOGIC
 User search(query 10) => User selects name => name looks up id => id gives price info and returns it to user.
@@ -92,6 +101,15 @@ app.get(`/items/:name/price`, async (req, res) => {
 	const itemId = await getItemId(name);
 	const itemStockValue = await getItemPrice(itemId);
 	const { high, low } = itemStockValue;
+
+	await prisma.priceHistory.create({
+		data: {
+			itemName: name,
+			itemId: itemId,
+			high: high,
+			low: low,
+		},
+	});
 
 	res.json({ name, high, low });
 });

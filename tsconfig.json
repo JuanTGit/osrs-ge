@@ -1,16 +1,14 @@
 {
 	"compilerOptions": {
-	  "target": "ES2020",
-	  "module": "node16",
-	  "moduleResolution": "node16",
-	  "outDir": "./dist",
-	  "strict": true,
-	  "esModuleInterop": true,
-	  "skipLibCheck": true,
-	  "sourceMap": true,
-	  "types": ["node"]
+		"target": "ES2020",
+		"module": "node16",
+		"moduleResolution": "node16",
+		"outDir": "./dist",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"types": ["node"]
 	},
-	"exclude": [
-		"node_modules"
-	]
+	"exclude": ["node_modules"]
 }

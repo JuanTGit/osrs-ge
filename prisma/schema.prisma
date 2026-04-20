@@ -1,16 +1,11 @@
 generator client {
-    provider = "prisma-client-js"
+    provider = "prisma-client"
+    output   = "../generated/prisma"
 }
 
 datasource db {
     provider = "postgresql"
 }
-
-// model PriceHistory {
-// 	id int @id @default(autoincrement())
-// 	itemName String
-// 	itemId Int
-// }
 
 model PriceHistory {
     id        Int      @id @default(autoincrement())
